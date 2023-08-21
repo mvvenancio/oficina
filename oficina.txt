@@ -1,0 +1,107 @@
+
+*Listar todos os produtos
+SELECT * FROM Produtos;
+
+*Listar todos os clientes
+SELECT * FROM Clientes;
+
+*Listar valor total de todos os pedidos
+SELECT SUM(valorTotalDaCompra) AS Total FROM Compras_Cliente;
+
+*Listar valor total que cada vendedor gastou
+SELECT F.idFuncionário, F.nome, SUM(CC.valorTotalDaCompra) AS TotalGasto
+FROM Funcionário F
+LEFT JOIN Atendimento A ON F.idFuncionário = A.idFuncionário
+LEFT JOIN Compras_Cliente CC ON A.idCliente = CC.idCliente
+GROUP BY F.idFuncionário, F.nome;
+
+*Listar valor total que cada cliente gastou
+SELECT C.idCliente, C.nome, SUM(CC.valorTotalDaCompra) AS TotalGasto
+FROM Cliente C
+LEFT JOIN Compras_Cliente CC ON C.idCliente = CC.idCliente
+GROUP BY C.idCliente, C.nome;
+
+*Listar produtos por valor em ordem decrescente
+SELECT * FROM Produtos
+ORDER BY valorDoProduto DESC;
+
+*Listar pedidos por cliente em ordem crescente
+SELECT CC.idCliente, C.nome, COUNT(CC.idCompras_Cliente) AS QuantidadePedidos
+FROM Compras_Cliente CC
+JOIN Cliente C ON CC.idCliente = C.idCliente
+GROUP BY CC.idCliente, C.nome
+ORDER BY QuantidadePedidos ASC;
+
+*Listar detalhes dos produtos em um pedido com cliente
+SELECT CC.idCompras_Cliente, P.idProdutos, P.códigoDoProduto, P.valorDoProduto, C.idCliente, C.nome
+FROM Compras_Cliente CC
+JOIN Produtos P ON CC.idProdutos = P.idProdutos
+JOIN Cliente C ON CC.idCliente = C.idCliente;
+
+*Listar nomes do cliente e descrição do pedido
+SELECT C.nome, CC.idCompras_Cliente, CC.valorTotalDaCompra
+FROM Cliente C
+JOIN Compras_Cliente CC ON C.idCliente = CC.idCliente;
+
+Quantos pedidos foram feitos por cada cliente?
+SELECT C.idCliente, C.nome, COUNT(CC.idCompras_Cliente) AS QuantidadePedidos
+FROM Cliente C
+LEFT JOIN Compras_Cliente CC ON C.idCliente = CC.idCliente
+GROUP BY C.idCliente, C.nome;
+
+Algum cliente também é funcionário?
+SELECT C.idCliente, C.nome
+FROM Cliente C
+WHERE C.idCliente IN (SELECT idFuncionário FROM Funcionário);
+
+Qual Relação de funcionário e cliente?
+SELECT F.idFuncionário, F.nome, C.idCliente, C.nome
+FROM Funcionário F
+LEFT JOIN Cliente C ON F.idFuncionário = C.idCliente;
+
+Qual número de vendas por ano?
+SELECT YEAR(data) AS Ano, COUNT(idCompras_Cliente) AS NúmeroVendas
+FROM Compras_Cliente
+GROUP BY Ano;
+
+Qual número de serviço realizado por ano?
+SELECT YEAR(data) AS Ano, COUNT(idAtendimento) AS NúmeroServiçosRealizados
+FROM Atendimento
+GROUP BY Ano;
+
+Qual número de serviço realizado e vendas por ano?
+SELECT Ano, SUM(NúmeroVendas) AS NúmeroVendas, SUM(NúmeroServiçosRealizados) AS NúmeroServiçosRealizados
+FROM (
+    SELECT YEAR(data) AS Ano, COUNT(idCompras_Cliente) AS NúmeroVendas, 0 AS NúmeroServiçosRealizados
+    FROM Compras_Cliente
+    GROUP BY Ano
+    UNION ALL
+    SELECT YEAR(data) AS Ano, 0 AS NúmeroVendas, COUNT(idAtendimento) AS NúmeroServiçosRealizados
+    FROM Atendimento
+    GROUP BY Ano
+) AS AnoStats
+GROUP BY Ano;
+
+Quantos produtos foram disponibilizados?
+SELECT COUNT(idProdutos) AS TotalProdutos FROM Produtos;
+
+Quantos serviço realizado foram realizados?
+SELECT COUNT(idAtendimento) AS TotalServiçosRealizados FROM Atendimento;
+
+Qual valor de serviço realizado por ano?
+SELECT YEAR(data) AS Ano, SUM(valorCobrado) AS ValorTotalServiçosRealizados
+FROM Atendimento
+GROUP BY Ano;
+
+Qual valor de serviço realizado e vendas por ano?
+SELECT Ano, SUM(ValorTotalVendas) AS ValorTotalVendas, SUM(ValorTotalServiçosRealizados) AS ValorTotalServiçosRealizados
+FROM (
+    SELECT YEAR(data) AS Ano, SUM(valorTotalDaCompra) AS ValorTotalVendas, 0 AS ValorTotalServiçosRealizados
+    FROM Compras_Cliente
+    GROUP BY Ano
+    UNION ALL
+    SELECT YEAR(data) AS Ano, 0 AS ValorTotalVendas, SUM(valorCobrado) AS ValorTotalServiçosRealizados
+    FROM Atendimento
+    GROUP BY Ano
+) AS AnoStats
+GROUP BY Ano;
